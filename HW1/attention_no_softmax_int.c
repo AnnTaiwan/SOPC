@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
 // define 參數
 // matrix A(M*W)
 // matrix B(W*N)    
@@ -20,7 +19,7 @@
 
 // 轉置矩陣B = A^T
 // A is a1 * a2 matrix, and B is a2 * a1 matrix.
-void transpose_matrix(float **A, float **B, int a1, int a2)
+void transpose_matrix(int **A, int **B, int a1, int a2)
 {
     for(int i = 0; i < a1; i++)
     {
@@ -30,48 +29,11 @@ void transpose_matrix(float **A, float **B, int a1, int a2)
         }
     }
 }
-// 對matrix做softmax，對"各列"
-void softmax(float **matrix, int rows, int cols) {
-    for (int i = 0; i < rows; i++)  // 對"各列"
-    {
-        // Find maximum value in the row
-        float max_val = matrix[i][0];
-        for (int j = 1; j < cols; j++) 
-        {
-            if (matrix[i][j] > max_val) 
-            {
-                max_val = matrix[i][j];
-            }
-        }
-        // printf("AAA: %f\n", max_val);
-        // for (int j = 0; j < cols; j++)
-        // {
-        //     printf("BBB: %f ", matrix[i][j]);
-
-        // }
-        // printf("----\n");
-
-        // Subtract maximum value to avoid overflow
-        float sum = 0.0;
-        for (int j = 0; j < cols; j++) 
-        {
-            matrix[i][j] = exp(matrix[i][j] - max_val);
-            sum += matrix[i][j];
-        }
-
-        // Normalize the row
-        for (int j = 0; j < cols; j++) 
-        {
-            matrix[i][j] /= sum;
-        }
-    }
-}
-
 // 輸入參數為兩個矩陣，接續是A的大小、B的大小
-float** matrix_mul(float **A, float **B, int a1, int a2, int b1, int b2) {
-    float **result = (float **)malloc(a1 * sizeof(float *)); // result is a1*b2 matrix.
+int** matrix_mul(int **A, int **B, int a1, int a2, int b1, int b2) {
+    int **result = (int **)malloc(a1 * sizeof(int *)); // result is a1*b2 matrix.
     for (int i = 0; i < a1; i++) {
-        result[i] = (float *)malloc(b2 * sizeof(float));
+        result[i] = (int *)malloc(b2 * sizeof(int));
     }
 
     for (int i = 0; i < a1; i++) {
@@ -84,33 +46,68 @@ float** matrix_mul(float **A, float **B, int a1, int a2, int b1, int b2) {
     }
     return result;
 }
+
 // 輸入參數為4個矩陣
 // 返回參數為矩陣
-float** attention(float **IN, float **Wq, float **Wk, float **Wv)
+int** attention(int **IN, int **Wq, int **Wk, int **Wv)
 {
-    // K-Transpose(S3*S1)
-    float **mat_Kt = (float **)malloc(S3 * sizeof(float *));
+    // // Q(S1*S3)
+    // int **mat_Q = (int **)malloc(S1 * sizeof(int *));
+    // for (int i = 0; i < S1; i++) 
+    // {
+    //     mat_Q[i] = (int *)malloc(S3 * sizeof(int));
+    // }
+    // // K(S1*S3)
+    // int **mat_K = (int **)malloc(S1 * sizeof(int *));
+    // for (int i = 0; i < S1; i++) 
+    // {
+    //     mat_K[i] = (int *)malloc(S3 * sizeof(int));
+    // }
+    // // K-Transpose(S3*S1)
+    int **mat_Kt = (int **)malloc(S3 * sizeof(int *));
     for (int i = 0; i < S3; i++) 
     {
-        mat_Kt[i] = (float *)malloc(S1 * sizeof(float));
+        mat_Kt[i] = (int *)malloc(S1 * sizeof(int));
     }
+    // // V(S1*S4)
+    // int **mat_V = (int **)malloc(S1 * sizeof(int *));
+    // for (int i = 0; i < S1; i++) 
+    // {
+    //     mat_V[i] = (int *)malloc(S4 * sizeof(int));
+    // }
+    // // A(S1*S1)
+    // int **mat_A = (int **)malloc(S1 * sizeof(int *));
+    // for (int i = 0; i < S1; i++) 
+    // {
+    //     mat_A[i] = (int *)malloc(S1 * sizeof(int));
+    // }
+    // // A(S1*S1)
+    // int **mat_A = (int **)malloc(S1 * sizeof(int *));
+    // for (int i = 0; i < S1; i++) 
+    // {
+    //     mat_A[i] = (int *)malloc(S1 * sizeof(int));
+    // }
+    // // mat_O是欲返回的輸出矩陣(S1*S4)，配置空間
+    // int **mat_O = (int **)malloc(S1 * sizeof(int *));
+    // for (int i = 0; i < S1; i++) 
+    // {
+    //     mat_O[i] = (int *)malloc(S4 * sizeof(int));
+    // }
     // 第一階段
     // Q = IN * Wq (S1 * S3)
-    float **mat_Q = matrix_mul(IN, Wq, S1, S2, S2, S3);
+    int **mat_Q = matrix_mul(IN, Wq, S1, S2, S2, S3);
     // K = IN * Wk (S1 * S3)
-    float **mat_K = matrix_mul(IN, Wk, S1, S2, S2, S3);
+    int **mat_K = matrix_mul(IN, Wk, S1, S2, S2, S3);
     // transpose K, and get mat_Kt(S3 * S1)
     transpose_matrix(mat_K, mat_Kt, S1, S3);
     // V = IN * Wv (S1 * S4)
-    float **mat_V = matrix_mul(IN, Wv, S1, S2, S2, S4);
+    int **mat_V = matrix_mul(IN, Wv, S1, S2, S2, S4);
     // 第二階段
     // A = Q * K^T (S1 * S1)
-    float **mat_A = matrix_mul(mat_Q, mat_Kt, S1, S3, S3, S1);
-    // 對mat_A做softmax
-    softmax(mat_A, S1, S1);
+    int **mat_A = matrix_mul(mat_Q, mat_Kt, S1, S3, S3, S1);
     // 第三階段
     // O(result) = A' * V (S1 * S4)
-    float **mat_O = matrix_mul(mat_A, mat_V, S1, S1, S1, S4);
+    int **mat_O = matrix_mul(mat_A, mat_V, S1, S1, S1, S4);
 
 
     // 釋放矩陣乘法結果矩陣的空間，除了mat_O(在main中會被釋放)
@@ -128,44 +125,45 @@ float** attention(float **IN, float **Wq, float **Wk, float **Wv)
     free(mat_V);
     free(mat_Kt);
     free(mat_A);
+
     
     return mat_O;
 }
 int main() {
     // 配置初始所需矩陣空間
     // IN(S1*S2)
-    float **IN = (float **)malloc(S1 * sizeof(float *));
+    int **IN = (int **)malloc(S1 * sizeof(int *));
     for (int i = 0; i < S1; i++) 
     {
-        IN[i] = (float *)malloc(S2 * sizeof(float));
+        IN[i] = (int *)malloc(S2 * sizeof(int));
     }
     // Wq(S2*S3)
-    float **Wq = (float **)malloc(S2 * sizeof(float *));
+    int **Wq = (int **)malloc(S2 * sizeof(int *));
     for (int i = 0; i < S2; i++) 
     {
-        Wq[i] = (float *)malloc(S3 * sizeof(float));
+        Wq[i] = (int *)malloc(S3 * sizeof(int));
     }
     // Wk(S2*S3)
-    float **Wk = (float **)malloc(S2 * sizeof(float *));
+    int **Wk = (int **)malloc(S2 * sizeof(int *));
     for (int i = 0; i < S2; i++) 
     {
-        Wk[i] = (float *)malloc(S3 * sizeof(float));
+        Wk[i] = (int *)malloc(S3 * sizeof(int));
     }
     // Wv(S2*S4)
-    float **Wv = (float **)malloc(S2 * sizeof(float *));
+    int **Wv = (int **)malloc(S2 * sizeof(int *));
     for (int i = 0; i < S2; i++) 
     {
-        Wv[i] = (float *)malloc(S4 * sizeof(float));
+        Wv[i] = (int *)malloc(S4 * sizeof(int));
     }
 
     // 輸入matrix data
-    float num = 0; // input number
+    int num = 0; // input number
     printf("Please input the matrix IN(%d * %d):\n", S1, S2);
     for(int i = 0 ; i < S1; i++)
     {
         for(int j = 0 ; j < S2; j++)
         {
-            scanf("%f", &num);
+            scanf("%d", &num);
             IN[i][j] = num;
         }
     }
@@ -174,7 +172,7 @@ int main() {
     {
         for(int j = 0 ; j < S3; j++)
         {
-            scanf("%f", &num);
+            scanf("%d", &num);
             Wq[i][j] = num;
         }
     }
@@ -183,7 +181,7 @@ int main() {
     {
         for(int j = 0 ; j < S3; j++)
         {
-            scanf("%f", &num);
+            scanf("%d", &num);
             Wk[i][j] = num;
         }
     }
@@ -192,18 +190,18 @@ int main() {
     {
         for(int j = 0 ; j < S4; j++)
         {
-            scanf("%f", &num);
+            scanf("%d", &num);
             Wv[i][j] = num;
         }
     }
     
     // 做self-attention
-    float **attention_result = attention(IN, Wq, Wk, Wv);
+    int **attention_result = attention(IN, Wq, Wk, Wv);
 
     printf("\nResult:\n");
     for (int i = 0; i < S1; i++) {
         for (int j = 0; j < S4; j++) {
-            printf("%f ", attention_result[i][j]);
+            printf("%d ", attention_result[i][j]);
         }
         printf("\n");
     }
