@@ -1,7 +1,8 @@
 `timescale 1ns / 1ps 
 module tb_mat_mul();
     reg startR, startC, startW;
-    reg clk, rst;
+    reg clk, rst, rstC;
+    wire [2:0] state_cal;
     wire [15:0] rdata;
     wire [31:0] wdata;
     wire [15:0] raddr, waddr;
@@ -25,6 +26,8 @@ module tb_mat_mul();
         .sizes(sizes),
         .clk(clk),
         .rst(rst),
+        .rstC(rstC),
+        .state_cal(state_cal),
         .raddr(raddr),
         .ren(ren),
         .finishR(finishR),
@@ -38,13 +41,14 @@ module tb_mat_mul();
     
     // Clock generation
     always begin
-        #10 clk = ~clk;
+        #5 clk = ~clk;
     end
 
     // Reset generation
     initial begin
         rst = 1;
-        #10 rst = 0;
+        #5 rst = 0;
+        rstC = 0;
     end
 
     // Testbench stimulus
@@ -56,7 +60,7 @@ module tb_mat_mul();
         startW = 0;
         
         // Wait for reset to complete
-        #20;
+        #10;
 
         // Start memory access
         startR = 1;
@@ -68,19 +72,23 @@ module tb_mat_mul();
         // finishR signal (transition from 0 to 1). 
         // Once the finishR signal goes high, the code will continue executing the subsequent lines of code.
         startR = 0;
-
+        
+        rstC = 1;
+        #20
+        rstC = 0;
         // Start calculation
         startC = 1;
         // Wait for calculation to finish
         @(posedge finishC);
-         #30
+        #5
         startC = 0;
-
+        $display("CCCC");
         // Start write
         startW = 1;
        
         // Wait for write to finish
         @(posedge finishW);
+        $display("WWWW");
         startW = 0;
 
 
