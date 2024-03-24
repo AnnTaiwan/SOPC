@@ -2,6 +2,7 @@
 module tb_mat_mul();
     reg startR, startC, startW;
     reg clk, rst, rstC;
+    reg [4:0] size1, size2, size3;
     wire [2:0] state_cal;
     wire [15:0] rdata;
     wire [31:0] wdata;
@@ -18,7 +19,26 @@ module tb_mat_mul();
 
     
     // Instantiate the Mat_mul_16bits_4x4_4x4 module
-    Mat_mul_16bits_4x4_4x4 mat_mul1(
+    // Mat_mul_16bits_4x4_4x4 mat_mul1(
+    //     .startR(startR),
+    //     .startC(startC),
+    //     .startW(startW),
+    //     .rdata(rdata),
+    //     .sizes(sizes),
+    //     .clk(clk),
+    //     .rst(rst),
+    //     .rstC(rstC),
+    //     .state_cal(state_cal),
+    //     .raddr(raddr),
+    //     .ren(ren),
+    //     .finishR(finishR),
+    //     .finishC(finishC),
+    //     .finishW(finishW),
+    //     .wdata(wdata),
+    //     .waddr(waddr),
+    //     .wen(wen)
+    // );
+    Mat_Mul_16bits mat_mul1(
         .startR(startR),
         .startC(startC),
         .startW(startW),
@@ -27,6 +47,9 @@ module tb_mat_mul();
         .clk(clk),
         .rst(rst),
         .rstC(rstC),
+        .size1(size1),
+        .size2(size2),
+        .size3(size3),
         .state_cal(state_cal),
         .raddr(raddr),
         .ren(ren),
@@ -47,6 +70,11 @@ module tb_mat_mul();
 
     // Reset generation
     initial begin
+        // set the matrix size
+        size1 = 4;
+        size2 = 5;
+        size3 = 6;
+
         rst = 1;
         rstC = 0;
         #15 
@@ -57,6 +85,7 @@ module tb_mat_mul();
     initial begin
         // Initialize signals
         clk = 0;
+        
         startR = 0;
         startC = 0;
         startW = 0;
@@ -79,21 +108,22 @@ module tb_mat_mul();
         rstC = 1; // reset the index        
         #20
         rstC = 0;
-        // Start calculation
-        startC = 1;
-        // Wait for calculation to finish
-        @(posedge finishC);
-        // #5
-        startC = 0;
-        $display("CCCC");
-        // Start write
-        startW = 1;
+/////////////////////////////////
+         // Start calculation
+         startC = 1;
+         // Wait for calculation to finish
+         @(posedge finishC);
+         // #5
+         startC = 0;
+         $display("CCCC");
+         // Start write
+         startW = 1;
        
-        // Wait for write to finish
-        @(posedge finishW);
-        $display("WWWW");
-        startW = 0;
-
+         // Wait for write to finish
+         @(posedge finishW);
+         $display("WWWW");
+         startW = 0;
+//////////////////////////////
 
 
 //        // chech the memory, read from the memory, start from raddr = 32

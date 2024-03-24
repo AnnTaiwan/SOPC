@@ -24,6 +24,9 @@ parameter size1 = 4;
 parameter size2 = 4;
 parameter size3 = 4;
 
+// reg [15:0] mat_A [size1][size2], mat_B [size2][size3]; // two matrix 4*4
+// reg [15:0] A1, B1, A2, B2, A3, B3, A4, B4;
+// reg [31:0] mat_Result [size1][size3]; //  matrix 4*4
 reg [15:0] mat_A [0:15], mat_B [0:15]; // two matrix 4*4
 reg [15:0] A1, B1, A2, B2, A3, B3, A4, B4;
 reg [31:0] mat_Result [0:15]; //  matrix 4*4
