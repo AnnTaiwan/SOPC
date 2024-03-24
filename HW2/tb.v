@@ -38,6 +38,7 @@ module tb_mat_mul();
         .wen(wen)
     );
     Memory Mem1(.waddr(waddr), .wdata(wdata), .wen(wen), .raddr(raddr), .ren(ren), .rdata(rdata), .sizes(sizes), .clk(clk), .rst(rst));
+    Memory Mem2(.waddr(waddr), .wdata(wdata), .wen(wen), .raddr(raddr), .ren(ren), .rdata(rdata), .sizes(sizes), .clk(clk), .rst(rst));
     
     // Clock generation
     always begin
@@ -47,8 +48,9 @@ module tb_mat_mul();
     // Reset generation
     initial begin
         rst = 1;
-        #5 rst = 0;
         rstC = 0;
+        #15 
+        rst = 0;
     end
 
     // Testbench stimulus
@@ -60,7 +62,7 @@ module tb_mat_mul();
         startW = 0;
         
         // Wait for reset to complete
-        #10;
+        #20;
 
         // Start memory access
         startR = 1;
@@ -72,15 +74,16 @@ module tb_mat_mul();
         // finishR signal (transition from 0 to 1). 
         // Once the finishR signal goes high, the code will continue executing the subsequent lines of code.
         startR = 0;
-        
-        rstC = 1;
+
+        // start to calculate the 4x4_4x4 matrix multiplication
+        rstC = 1; // reset the index        
         #20
         rstC = 0;
         // Start calculation
         startC = 1;
         // Wait for calculation to finish
         @(posedge finishC);
-        #5
+        // #5
         startC = 0;
         $display("CCCC");
         // Start write

@@ -7,11 +7,12 @@ module Memory(
     input [15:0] raddr, // Read address input
     input ren, // Read enable signal
     output reg [31:0] rdata, // Read data output
-    output [15:0] sizes, // Size of the rdata bytes
+    output reg [15:0] sizes, // the number of bytes: the size of the data being read or written. One data in this memory is 32bits(4bytes)
     input clk, // Clock signal
     input rst // Reset signal
 );
-reg [31:0] mem [0:255]; // 256x16-bit internal memory
+reg [31:0] mem [0:1024]; // 256x16-bit internal memory
+
 initial begin
     mem[0] = 0;
     mem[1] = 1;
@@ -47,13 +48,24 @@ initial begin
     mem[31] = 31;
 end
 
+// reset the memory
+always @(posedge clk or posedge rst) begin
+    if(rst) begin
+        rdata <= 32'bz;
+        sizes <= 15'bz;
+    end
+end
+
 always @(posedge clk) begin
     if (ren) begin
         rdata <= mem[raddr];
+        sizes <= 4; // 4 bytes
     end else if (wen) begin
         mem[waddr] <= wdata;
-    end else begin
-        rdata = 4'bzzzz;
+        sizes <= 4;
+    end else begin // nothing
+        rdata = 32'bz;
+        sizes <= 4;
     end
 end
 
