@@ -33,7 +33,7 @@ module MUL16(A, B, Product);
     MultiplierUnit M14(.A(A), .Bi(B[14]), .MULout(MULout14));
     MultiplierUnit M15(.A(A), .Bi(B[15]), .MULout(MULout15));
 
-    // A?Ö≥??ÑËº∏?Ö•?òØ???0??†Âú®??È´ò‰?çÂ??   
+     
     CLA_16_bit C0(.A({1'b0, MULout0[15:1]}), .B(MULout1), .C_in(1'b0), .C_out(CLA_Cout0), .Sum(CLA_S0));
     CLA_16_bit C1(.A({CLA_Cout0, CLA_S0[15:1]}), .B(MULout2), .C_in(1'b0), .C_out(CLA_Cout1), .Sum(CLA_S1));
     CLA_16_bit C2(.A({CLA_Cout1, CLA_S1[15:1]}), .B(MULout3), .C_in(1'b0), .C_out(CLA_Cout2), .Sum(CLA_S2));

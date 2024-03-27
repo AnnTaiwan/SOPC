@@ -52,12 +52,12 @@ module tb_mat_mul();
         size3 = 8;
 
         rstMemory = 0; // don't reset the input memory, preventing from deleting the initial data
-        rstMemory2 = 1; // initialize it
+        rstMemory2 = 0;
         rst = 1;
         rstC = 0;
         #15 
         rst = 0;
-        rstMemory2 = 0; // initialize it
+        
     end
 
     // Testbench stimulus
@@ -95,11 +95,14 @@ module tb_mat_mul();
         $display("Finish matrix multiplication.");
 
          
-        rstC = 1; // reset the index        
+        rstC = 1; // reset the index    
+        rstMemory2 = 1; // initialize the output_memory to 0
         #20
         rstC = 0;
+        rstMemory2 = 0;
         // Start write
         startW = 1;
+        
        
         // Wait for write to finish
         @(posedge finishW);
@@ -108,7 +111,7 @@ module tb_mat_mul();
         startW = 0;
         
         // test if the wriing rersult is correct or not.
-        // rst = 1;
+//        rst = 1;
         #20
 
         // End simulation

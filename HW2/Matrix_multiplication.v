@@ -36,23 +36,10 @@ integer i, j, k, temp, h, r; //index
 wire [31:0] product[0:MAX_SIZE-1]; // record the mul_unit result
 
 //C_in is always 1'b0
-reg [31:0] c_a; // one input of the adder
-reg [31:0] c_b; // one input of the adder
-wire [31:0] sum; // result of the adder
-wire C_out; // C-out of the adder
-
-initial begin
-    // initialize all the array
-    for(h = 0; h < SQU_MAX_SIZE; h = h + 1) begin
-        mat_A[h] = 0;
-        mat_B[h] = 0;
-        mat_Result[h] = 0;
-    end
-    for(h = 0; h < MAX_SIZE; h = h + 1) begin
-        A[h] = 0;
-        B[h] = 0;
-    end
-end
+reg [31:0] c_a[0:7]; // one input of the adder
+reg [31:0] c_b[0:7]; // one input of the adder
+wire [31:0] sum[0:7]; // result of the adder
+wire C_out[0:7]; // C-out of the adder
 
 always @(posedge clk or posedge rst) begin
     // initialize
@@ -79,9 +66,17 @@ always @(posedge clk or posedge rst) begin
         squ_sizeA <= size1 * size2; // used as index  for later
         squ_sizeB <= size2 * size3; // used as index  for later
         total_data_size <= size1 * size2 + size2 * size3; // used as index  for later
-        c_a <= 0;
-        c_b <= 0;
-              
+        
+        // initialize all the array
+        for(h = 0; h < SQU_MAX_SIZE; h = h + 1) begin
+            mat_A[h] <= 0;
+            mat_B[h] <= 0;
+            mat_Result[h] <= 0;
+        end
+        for(h = 0; h < MAX_SIZE; h = h + 1) begin
+            A[h] <= 0;
+            B[h] <= 0;
+        end
     end
 end
 
@@ -94,24 +89,24 @@ always @(posedge clk) begin
         ren <= 1;
         if (temp >= 2) begin // temp used for fixing the delay problem between this module and Memory module
             if(i >= 0 && i < squ_sizeA) begin
-                mat_A[(i % s2) + (i / s2) * MAX_SIZE] = rdata[15:0]; // assign the data into 2D way, not linearly
+                mat_A[(i % s2) + (i / s2) * MAX_SIZE] <= rdata[15:0]; // assign the data into 2D way, not linearly
             end else if (i >= squ_sizeA && i < total_data_size) begin
-                mat_B[((i - squ_sizeA) % s3) + ((i - squ_sizeA) / s3) * MAX_SIZE] = rdata[15:0]; // assign the data into 2D way, not linearly
+                mat_B[((i - squ_sizeA) % s3) + ((i - squ_sizeA) / s3) * MAX_SIZE] <= rdata[15:0]; // assign the data into 2D way, not linearly
             end
             if(i >= total_data_size) begin
                 //finished reading data
                 ren <= 0;
                 finishR <= 1; // output signal to let the tb know can start doing calculation
             end else begin // go to next clk to save next data
-                i = i + 1;
+                i <= i + 1;
                 raddr <= raddr + 1;
             end
-            if(temp == 2) begin
-                i = i - 1;
-                temp = temp + 1;
+            if(temp <= 2) begin
+                i <= 0;
+                temp <= temp + 1;
             end
         end else begin
-            temp = temp + 1;                           
+            temp <= temp + 1;                           
         end
     end
 end
@@ -135,17 +130,24 @@ MUL16 m14(.A(A[13]), .B(B[13]), .Product(product[13]));
 MUL16 m15(.A(A[14]), .B(B[14]), .Product(product[14]));
 MUL16 m16(.A(A[15]), .B(B[15]), .Product(product[15]));
 // 1 32-bit adder
-CLA_32_bit C1(.C_in(1'b0), .A(c_a), .B(c_b), .C_out(C_out), .Sum(sum));
+CLA_32_bit C1(.C_in(1'b0), .A(c_a[0]), .B(c_b[0]), .C_out(C_out[0]), .Sum(sum[0]));
+CLA_32_bit C2(.C_in(1'b0), .A(c_a[1]), .B(c_b[1]), .C_out(C_out[1]), .Sum(sum[1]));
+CLA_32_bit C3(.C_in(1'b0), .A(c_a[2]), .B(c_b[2]), .C_out(C_out[2]), .Sum(sum[2]));
+CLA_32_bit C4(.C_in(1'b0), .A(c_a[3]), .B(c_b[3]), .C_out(C_out[3]), .Sum(sum[3]));
+CLA_32_bit C5(.C_in(1'b0), .A(c_a[4]), .B(c_b[4]), .C_out(C_out[4]), .Sum(sum[4]));
+CLA_32_bit C6(.C_in(1'b0), .A(c_a[5]), .B(c_b[5]), .C_out(C_out[5]), .Sum(sum[5]));
+CLA_32_bit C7(.C_in(1'b0), .A(c_a[6]), .B(c_b[6]), .C_out(C_out[6]), .Sum(sum[6]));
+CLA_32_bit C8(.C_in(1'b0), .A(c_a[7]), .B(c_b[7]), .C_out(C_out[7]), .Sum(sum[7]));
 
 // start from the result matrix's  first column
 always @(posedge clk) begin
         // $display("clk at %d", state_cal);
         if(rstC) begin
-            i <= 0;  // record the current coordinate (i,j) of the result matrix
-            j <= 0;  // record the current coordinate (i,j) of the result matrix
-            k <= 0; // middle index of  mat_A[i][k] * mat_B[k][j]   
-            r <= 0; // counting index 
-            state_cal <= 0; // mul state -> cal1 -> cal2 -> cal3 // each clk do one state
+            i = 0;  // record the current coordinate (i,j) of the result matrix
+            j = 0;  // record the current coordinate (i,j) of the result matrix
+            k = 0; // middle index of  mat_A[i][k] * mat_B[k][j]   
+            r = 0; // counting index 
+            state_cal = 0; // mul state -> cal1 -> cal2 -> cal3 // each clk do one state
         end
         else if(startC) begin
             case(state_cal) 
@@ -156,32 +158,60 @@ always @(posedge clk) begin
                         A[k] = mat_A[i * MAX_SIZE + k];
                         B[k] = mat_B[k * MAX_SIZE + j];
                     end         
-                    state_cal <= 1;// in next clock, do the sum of product
-                    k <= 0; // initiate k to 0 in order to use in next time
+                    state_cal = 1;// in next clock, do the sum of product
+                    k = 0; // initiate k to 0 in order to use in next time
                 end
                 1: begin // sequentially adding each product in every clk
-                    if(s2 == 1) begin
-                        state_cal <= 2; // directly go to next state
-                        r = 0; // initialize r for next time
-                    end
-                    else if(r == 0) begin // s2 >= 2
-                        c_a = product[0];
-                        c_b = product[1];
-                        r = r + 2;
-                    end
-                    else begin
-                        c_a = sum;
-                        c_b = product[r];
+                    if(r == 0) begin
+                        c_a[0] = product[0];
+                        c_b[0] = product[1];
+                        c_a[1] = product[2];
+                        c_b[1] = product[3];
+                        c_a[2] = product[4];
+                        c_b[2] = product[5];
+                        c_a[3] = product[6];
+                        c_b[3] = product[7];
+                        c_a[4] = product[8];
+                        c_b[4] = product[9];
+                        c_a[5] = product[10];
+                        c_b[5] = product[11];
+                        c_a[6] = product[12];
+                        c_b[6] = product[13];
+                        c_a[7] = product[14];
+                        c_b[7] = product[15];
+
                         r = r + 1;
                     end
+                    else if(r == 1) begin
+                        c_a[0] = sum[0];
+                        c_b[0] = sum[1];
+                        c_a[1] = sum[2];
+                        c_b[1] = sum[3];
+                        c_a[2] = sum[4];
+                        c_b[2] = sum[5];
+                        c_a[3] = sum[6];
+                        c_b[3] = sum[7];
 
-                    if(r >= s2) begin
-                        state_cal <= 2; // finished the sum part, so go to next state
+                        r = r + 1;
+                    end
+                    else if(r == 2) begin
+                        c_a[0] = sum[0];
+                        c_b[0] = sum[1];
+                        c_a[1] = sum[2];
+                        c_b[1] = sum[3];
+                    
+                        r = r + 1;
+                    end
+                    else if(r == 3) begin
+                        c_a[0] = sum[0];
+                        c_b[0] = sum[1];
+                    
+                        state_cal = 2; // finished the sum part, so go to next state
                         r = 0; // initialize r for next time
                     end
                 end
                 2: begin // assign sum to result
-                    mat_Result[i * s3 + j] = sum; // final result of mat_Result[i][j]
+                    mat_Result[i * s3 + j] = sum[0]; // final result of mat_Result[i][j]
                     // show in the console
                     $write("%d ", mat_Result[i * s3 + j]);
                     if(j < s3 - 1) begin
@@ -191,12 +221,13 @@ always @(posedge clk) begin
                         i = i + 1;
                         $write("\n");
                     end
+
                     if(i >= s1) begin // finished the mat_mul
-                        state_cal <= 3; // prevent from doing any state in this always blocks
-                        finishC <= 1; // finish calculation, output signal
+                        state_cal = 3; // prevent from doing any state in this always blocks
+                        finishC = 1; // finish calculation, output signal
                     end else begin
-                        state_cal <= 0; // go back to first state to do next result
-                    end        
+                        state_cal = 0; // go back to first state to do next result
+                    end      
                 end
             endcase
         end
@@ -212,17 +243,18 @@ always @(posedge clk) begin
     else if (startW) begin // before start writing , tb will reset the index
         if(temp >= 2) begin // temp used for the delay problem
             wen <= 1;     // enable  writing
-            wdata <= mat_Result[i * s3 + j]; // assign written data
-            if(j < s3 - 1) begin
-                j = j + 1; // next column
-            end
-            else begin // j==s3-1, go to next row
-                j = 0;
-                i = i + 1; // next row
-            end
             if(i >= s1) begin // finished the mat_mul
                 finishW <= 1; // finish writing, output signal                   
             end
+            wdata <= mat_Result[i * s3 + j]; // assign written data
+            if(j < s3 - 1) begin
+                j <= j + 1; // next column
+            end
+            else begin // j==s3-1, go to next row
+                j <= 0;
+                i <= i + 1; // next row
+            end
+            
             
             if(temp == 2) begin
                 j <= 0;    

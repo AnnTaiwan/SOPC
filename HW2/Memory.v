@@ -14,46 +14,39 @@ module Memory(
 );
 reg [31:0] mem [0:1023]; // 1024x16-bit internal memory
 integer i;
-initial begin
-    for(i = 0; i < 1024; i = i + 1) begin
-        mem[i] = i;
-    end
-end
 
 // reset the output signal
-always @(posedge clk or posedge rst) begin
+always @(posedge clk or posedge rst or posedge rstMemory) begin
     if(rst) begin
         rdata <= 32'bz;
         sizes <= 15'bz;
-        // Can use for print the final result in the end of the tb process by setting rst 1 and wait #10 to finish.
-        // for(i = 0; i < 64; i = i + 1) begin
-        //     $write("%d ",mem[i]); 
-        //     if(i % 8 == 7) begin
-        //         $write("\n"); 
-        //     end
-           
-        // end
-    end
-end
-always @(posedge clk or posedge rstMemory) begin
-    if(rstMemory) begin
+        // Can use for print the final result in the end of the tb process by setting rst 1 and wait #20 to finish.
+//        for(i = 0; i < 64; i = i + 1) begin
+//            $write("%d ",mem[i]); 
+//            if(i % 8 == 7) begin
+//                $write("\n"); 
+//            end          
+//        end
         for(i = 0; i < 1024; i = i + 1) begin
-            mem[i] = 0;
+            mem[i] <= i;
         end
     end
-end
-
-always @(posedge clk) begin
-    if (ren) begin
+    else if(rstMemory) begin
+        for(i = 0; i < 1024; i = i + 1) begin
+            mem[i] <= 0;
+        end
+    end
+    else if (ren) begin
         rdata <= mem[raddr];
         sizes <= 4; // 4 bytes
     end else if (wen) begin
         mem[waddr] <= wdata;
         sizes <= 4;
     end else begin // nothing
-        rdata = 32'bz;
+        rdata <= 32'bz;
         sizes <= 4;
     end
 end
 
+    
 endmodule
