@@ -5,7 +5,7 @@ module tb_mat_mul();
     reg [4:0] size1, size2, size3;
     wire [2:0] state_cal;
     // below __Name__2 wire is used for output memory, the other is for input memory.
-    wire [15:0] rdata, rdata2;
+    wire [31:0] rdata, rdata2;
     wire [31:0] wdata, wdata2;
     wire [15:0] raddr, waddr, raddr2, waddr2;
     wire ren, wen, ren2, wen2;
