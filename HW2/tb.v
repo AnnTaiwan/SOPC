@@ -1,18 +1,18 @@
 `timescale 1ns / 1ps 
 module tb_mat_mul();
     reg startR, startC, startW;
-    reg clk, rst, rstC;
+    reg  rst, rstC, clk;
     reg [4:0] size1, size2, size3;
     wire [2:0] state_cal;
     // below __Name__2 wire is used for output memory, the other is for input memory.
-    wire [15:0] rdata, rdata2;
+    wire [31:0] rdata, rdata2;
     wire [31:0] wdata, wdata2;
     wire [15:0] raddr, waddr, raddr2, waddr2;
     wire ren, wen, ren2, wen2;
     wire [15:0] sizes;
     wire finishR, finishC, finishW;
     reg rstMemory, rstMemory2; // tb can reset the memory if needed
-
+    
     Mat_Mul_16bits mat_mul1(
         .startR(startR),
         .startC(startC),
@@ -47,9 +47,9 @@ module tb_mat_mul();
     initial begin
         // set the matrix size
         // mat_A is size1 * size1, mat_B is size2 * size3.
-        size1 = 8;
-        size2 = 8;
-        size3 = 8;
+        size1 = 16;
+        size2 = 16;
+        size3 = 16;
 
         rstMemory = 0; // don't reset the input memory, preventing from deleting the initial data
         rstMemory2 = 0;
@@ -117,5 +117,5 @@ module tb_mat_mul();
         // End simulation
         $finish;
     end
-
+    
 endmodule

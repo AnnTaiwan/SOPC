@@ -5,7 +5,7 @@ module Mat_Mul_16bits(
     input startW, // Start signal to write memory
     input [31:0] rdata, // Read data output from input memory
     input [15:0] sizes, // Size selection for read/write operations
-    input clk, // Clock signal
+    input wire clk, // Clock signal
     input rst, // Reset signal
     input rstC, // reset for the calculation
     input [4:0] size1, size2, size3, // mat_A is size1 * size1, mat_B is size2 * size3.
@@ -32,7 +32,7 @@ reg [15:0] mat_A [0:SQU_MAX_SIZE-1], mat_B [0:SQU_MAX_SIZE-1]; // two source mat
 reg [15:0] A [0:MAX_SIZE-1], B [0:MAX_SIZE-1]; // input of mul_unit(16)
 reg [31:0] mat_Result [0:SQU_MAX_SIZE-1]; //  result matrix 
 
-integer i, j, k, temp, h, r; //index
+integer i, j, i2, j2, i3, j3, k, temp, temp2, h, r, p; //index
 wire [31:0] product[0:MAX_SIZE-1]; // record the mul_unit result
 
 //C_in is always 1'b0
@@ -43,22 +43,16 @@ wire C_out[0:7]; // C-out of the adder
 
 always @(posedge clk or posedge rst) begin
     // initialize
-    if(rst) begin
-        i <= 0; 
-        j <= 0; 
-        k <= 0;
-        temp <= 0;
-        h <= 0;
-        r <= 0;
-        ren <= 0;
-        raddr <= 0;
-        finishR <= 0;
-        finishC <= 0;
-        finishW <= 0;
-        wdata <= 0;
-        waddr <= 0; 
-        wen <= 0;
-        state_cal <= 0;
+    if(rst) begin      
+//        ren <= 0;
+//        raddr <= 0;
+//        finishR <= 0;
+//        finishC <= 0;
+//        finishW <= 0;
+////        wdata <= 0;
+////        waddr <= 0; 
+//        wen <= 0;
+//        state_cal <= 0;
         s1 <= size1;
         s2 <= size2;
         s3 <= size3;
@@ -67,16 +61,16 @@ always @(posedge clk or posedge rst) begin
         squ_sizeB <= size2 * size3; // used as index  for later
         total_data_size <= size1 * size2 + size2 * size3; // used as index  for later
         
-        // initialize all the array
-        for(h = 0; h < SQU_MAX_SIZE; h = h + 1) begin
-            mat_A[h] <= 0;
-            mat_B[h] <= 0;
-            mat_Result[h] <= 0;
-        end
-        for(h = 0; h < MAX_SIZE; h = h + 1) begin
-            A[h] <= 0;
-            B[h] <= 0;
-        end
+//        // initialize all the array
+//        for(h = 0; h < SQU_MAX_SIZE; h = h + 1) begin
+//            mat_A[h] <= 0;
+//            mat_B[h] <= 0;
+//            mat_Result[h] <= 0;
+//        end
+//        for(p = 0; p < MAX_SIZE; p = p + 1) begin
+//            A[p] <= 0;
+//            B[p] <= 0;
+//        end
     end
 end
 
@@ -85,7 +79,20 @@ end
 // in order to use the mul_unit later, I assign the matrix data into 2D way, not linearly
 // row-major
 always @(posedge clk) begin
-    if (startR) begin
+    if(rst) begin
+        raddr <= 0;
+        finishR <= 0;
+        ren <= 0;
+        i <= 0; 
+        j <= 0; 
+        temp <= 0;
+        // initialize all the array
+        for(h = 0; h < SQU_MAX_SIZE; h = h + 1) begin
+            mat_A[h] <= 0;
+            mat_B[h] <= 0;
+        end
+    end
+    else if (startR) begin
         ren <= 1;
         if (temp >= 2) begin // temp used for fixing the delay problem between this module and Memory module
             if(i >= 0 && i < squ_sizeA) begin
@@ -142,9 +149,21 @@ CLA_32_bit C8(.C_in(1'b0), .A(c_a[7]), .B(c_b[7]), .C_out(C_out[7]), .Sum(sum[7]
 // start from the result matrix's  first column
 always @(posedge clk) begin
         // $display("clk at %d", state_cal);
-        if(rstC) begin
-            i = 0;  // record the current coordinate (i,j) of the result matrix
-            j = 0;  // record the current coordinate (i,j) of the result matrix
+        if(rst) begin
+            finishC <= 0;
+            state_cal <= 0;
+            // initialize all the array
+            for(p = 0; p < MAX_SIZE; p = p + 1) begin
+                A[p] <= 0;
+                B[p] <= 0;
+            end
+            for(h = 0; h < SQU_MAX_SIZE; h = h + 1) begin
+                mat_Result[h] <= 0;
+            end
+        end
+        else if(rstC) begin
+            i2 = 0;  // record the current coordinate (i,j) of the result matrix
+            j2 = 0;  // record the current coordinate (i,j) of the result matrix
             k = 0; // middle index of  mat_A[i][k] * mat_B[k][j]   
             r = 0; // counting index 
             state_cal = 0; // mul state -> cal1 -> cal2 -> cal3 // each clk do one state
@@ -155,8 +174,8 @@ always @(posedge clk) begin
                     // mat_A and mat_B were being reorganized the datas at reading part.
                     // so it can multiply the corresponding position between mat_A and mat_B directly.
                     for(k = 0; k < 16; k = k + 1) begin
-                        A[k] = mat_A[i * MAX_SIZE + k];
-                        B[k] = mat_B[k * MAX_SIZE + j];
+                        A[k] = mat_A[i2 * MAX_SIZE + k];
+                        B[k] = mat_B[k * MAX_SIZE + j2];
                     end         
                     state_cal = 1;// in next clock, do the sum of product
                     k = 0; // initiate k to 0 in order to use in next time
@@ -211,18 +230,18 @@ always @(posedge clk) begin
                     end
                 end
                 2: begin // assign sum to result
-                    mat_Result[i * s3 + j] = sum[0]; // final result of mat_Result[i][j]
+                    mat_Result[i2 * s3 + j2] = sum[0]; // final result of mat_Result[i][j]
                     // show in the console
-                    $write("%d ", mat_Result[i * s3 + j]);
-                    if(j < s3 - 1) begin
-                        j = j + 1;
+                    $write("%d ", mat_Result[i2 * s3 + j2]);
+                    if(j2 < s3 - 1) begin
+                        j2 = j2 + 1;
                     end else begin // j==s3-1, go to next row
-                        j = 0;
-                        i = i + 1;
+                        j2 = 0;
+                        i2 = i2 + 1;
                         $write("\n");
                     end
 
-                    if(i >= s1) begin // finished the mat_mul
+                    if(i2 >= s1) begin // finished the mat_mul
                         state_cal = 3; // prevent from doing any state in this always blocks
                         finishC = 1; // finish calculation, output signal
                     end else begin
@@ -235,38 +254,44 @@ end
 
 // Write data to external memory at specified write address
 always @(posedge clk) begin
-    if(rstC) begin
-        i <= 0;  // record the current coordinate (i,j) of the result matrix
-        j <= 0;  // record the current coordinate (i,j) of the result matrix
-        temp <= 0; // skip the first clk when startW = 1
+    if(rst) begin
+        finishW <= 0;
+        wdata <= 0;
+        waddr <= 0; 
+        wen <= 0;
+    end
+    else if(rstC) begin
+        i3 <= 0;  // record the current coordinate (i,j) of the result matrix
+        j3 <= 0;  // record the current coordinate (i,j) of the result matrix
+        temp2 <= 0; // skip the first clk when startW = 1
     end
     else if (startW) begin // before start writing , tb will reset the index
-        if(temp >= 2) begin // temp used for the delay problem
+        if(temp2 >= 2) begin // temp used for the delay problem
             wen <= 1;     // enable  writing
-            if(i >= s1) begin // finished the mat_mul
+            if(i3 >= s1) begin // finished the mat_mul
                 finishW <= 1; // finish writing, output signal                   
             end
-            wdata <= mat_Result[i * s3 + j]; // assign written data
-            if(j < s3 - 1) begin
-                j <= j + 1; // next column
+            wdata <= mat_Result[i3 * s3 + j3]; // assign written data
+            if(j3 < s3 - 1) begin
+                j3 <= j3 + 1; // next column
             end
             else begin // j==s3-1, go to next row
-                j <= 0;
-                i <= i + 1; // next row
+                j3 <= 0;
+                i3 <= i3 + 1; // next row
             end
             
             
-            if(temp == 2) begin
-                j <= 0;    
+            if(temp2 == 2) begin
+                j3 <= 0;    
                 waddr <= 0;            
             end
-            else if(temp > 3) begin
+            else if(temp2 > 3) begin
                 waddr <= waddr + 1; // write in next address in the memory
             end
-            temp <= temp + 1;
+            temp2 <= temp2 + 1;
         end
         else begin
-            temp <= temp + 1;
+            temp2 <= temp2 + 1;
         end
     end
 end

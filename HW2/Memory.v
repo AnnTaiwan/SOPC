@@ -8,18 +8,19 @@ module Memory(
     input ren, // Read enable signal
     output reg [31:0] rdata, // Read data output
     output reg [15:0] sizes, // the number of bytes: the size of the data being read or written. One data in this memory is 32bits(4bytes)
-    input clk, // Clock signal
+    input wire clk, // Clock signal
     input rst, // Reset signal
     input rstMemory // Reset memory to 0
 );
+
 reg [31:0] mem [0:1023]; // 1024x16-bit internal memory
 integer i;
 
 // reset the output signal
 always @(posedge clk or posedge rst or posedge rstMemory) begin
     if(rst) begin
-        rdata <= 32'bz;
-        sizes <= 15'bz;
+        rdata <= 32'b0;
+        sizes <= 15'b0;
         // Can use for print the final result in the end of the tb process by setting rst 1 and wait #20 to finish.
 //        for(i = 0; i < 64; i = i + 1) begin
 //            $write("%d ",mem[i]); 
@@ -27,9 +28,10 @@ always @(posedge clk or posedge rst or posedge rstMemory) begin
 //                $write("\n"); 
 //            end          
 //        end
-        for(i = 0; i < 1024; i = i + 1) begin
-            mem[i] <= i;
-        end
+//        for(i = 0; i < 1024; i = i + 1) begin
+//            mem[i] <= i;
+//        end
+         $readmemh("D:/SOPC/HW2/TP1.dat", mem); // Read data from Test_pattern.dat file into memory
     end
     else if(rstMemory) begin
         for(i = 0; i < 1024; i = i + 1) begin
