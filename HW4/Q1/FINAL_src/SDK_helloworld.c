@@ -120,7 +120,7 @@ int main()
         int ok = 1; // make sure printing result after finish is set to 1.
         while(ok){
         	printf("In the loop.\n(1)MUL_RST:%d\n(2)START:%d\n(3)FINISH:%d\n", pointer[MUL_RST_REG],pointer[START_REG],pointer[FINISH_REG]);
-			if(pointer[START_REG] == 1)
+			if(pointer[FINISH_REG] == 1)
 			{
 				printf("----------------------------------\n");
 				printf("Finish the calculation.\nResult matrix:\n");
